@@ -1,0 +1,19 @@
+{{#unless themes}}
+        <p>Please wait while the grid view is loading, this requires javascript</p>
+        <p>If themes doesn't seem to appear, try to check <a href="/themes.txt">/themes.txt</a> and see if our datasource exists!</p>
+{{/unless}}
+
+{{#if themes}}
+
+
+
+            {{#each themes}}
+            <ul class="nav-pills row-fluid themes">
+                <li class="span10"><a class="internal" data-theme="{{this.name}}" href="http://{{this.name}}.pelicanthemes.norrs.no">{{this.name}}</a></li>
+                <li class="span2"><a href="http://{{this.name}}.pelicanthemes.norrs.no">[e]</a></li>
+            </ul>
+            {{/each}}
+
+
+
+{{/if}}

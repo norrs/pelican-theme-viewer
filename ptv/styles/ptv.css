@@ -1,0 +1,24 @@
+/*iframe {
+    position: relative;
+    -webkit-transform: scale(0.8, 0.8);
+    -moz-transform: scale(0.8, 0.8);
+    transform: scale(0.8, 0.8);
+    -moz-transform-origin: 0 0;
+    -webkit-transform-origin: 0 0;
+    transform-origin: 0 0;
+    position: relative;
+    z-index: 90;
+}*/
+
+body {
+    padding-top: 60px;
+}
+.themes li {
+
+    text-align: center
+}
+
+.themes li a.internal {
+    padding: 0;
+    text-align: left;
+}

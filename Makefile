@@ -4,6 +4,7 @@ PELICANOPTS=
 
 BASEDIR=$(CURDIR)
 INPUTDIR=$(BASEDIR)/content
+PTVDIR=$(BASEDIR)/ptv
 OUTPUTDIR=$(BASEDIR)/output
 CONFFILE=$(BASEDIR)/pelicanconf.py
 PUBLISHCONF=$(BASEDIR)/publishconf.py
@@ -12,10 +13,12 @@ FTP_HOST=localhost
 FTP_USER=anonymous
 FTP_TARGET_DIR=/
 
-SSH_HOST=localhost
-SSH_PORT=22
-SSH_USER=root
-SSH_TARGET_DIR=/var/www
+SSH_HOST=
+SSH_PORT=
+SSH_USER=
+SSH_TARGET_DIR=
+
+-include $(BASEDIR)/Makefile.local
 
 S3_BUCKET=my_s3_bucket
 
@@ -43,14 +46,11 @@ help:
 
 html: clean $(OUTPUTDIR)/index.html
 
-$(OUTPUTDIR)/%.html:
-	$(PELICAN) $(INPUTDIR) -o $(OUTPUTDIR) -s $(CONFFILE) $(PELICANOPTS)
-
+$(OUTPUTDIR)/%.html: ptv
 clean:
 	[ ! -d $(OUTPUTDIR) ] || find $(OUTPUTDIR) -mindepth 1 -delete
 
-regenerate: clean
-	$(PELICAN) -r $(INPUTDIR) -o $(OUTPUTDIR) -s $(CONFFILE) $(PELICANOPTS)
+regenerate: clean ptv
 
 serve:
 	cd $(OUTPUTDIR) && $(PY) -m pelican.server
@@ -63,8 +63,23 @@ stopserver:
 	kill -9 `cat srv.pid`
 	@echo 'Stopped Pelican and SimpleHTTPServer processes running in background.'
 
-publish:
-	$(PELICAN) $(INPUTDIR) -o $(OUTPUTDIR) -s $(PUBLISHCONF) $(PELICANOPTS)
+ptv:
+	rsync -P -rvz --delete $(PTVDIR)/* $(OUTPUTDIR)/ --cvs-exclude
+
+ptv_dev: clean
+	for ptv_dev_file in $(BASEDIR)/ptv/*; do ln -s "$$ptv_dev_file" "$(OUTPUTDIR)/"; done
+
+ptv_themes:
+	[ -f $(OUTPUTDIR)/js/themes.txt ] && rm $(OUTPUTDIR)/js/themes.txt || echo "NO themes file found, creating it"
+	touch $(OUTPUTDIR)/js/themes.txt
+	for theme in pelican-themes/* ; do \
+		if [ -d "$(BASEDIR)/$$theme" ]; then \
+			$(PELICAN) $(INPUTDIR) -t "$(BASEDIR)/$$theme" -o $(OUTPUTDIR)/$$theme; \
+			basename "$$theme" >> $(OUTPUTDIR)/js/themes.txt; \
+		fi \
+	done
+
+publish: ptv ptv_themes
 
 ssh_upload: publish
 	scp -P $(SSH_PORT) -r $(OUTPUTDIR)/* $(SSH_USER)@$(SSH_HOST):$(SSH_TARGET_DIR)
@@ -85,4 +100,4 @@ github: publish
 	ghp-import $(OUTPUTDIR)
 	git push origin gh-pages
 
-.PHONY: html help clean regenerate serve devserver publish ssh_upload rsync_upload dropbox_upload ftp_upload s3_upload github
+.PHONY: html help clean regenerate serve devserver ptv ptv_themes ptv_dev publish ssh_upload rsync_upload dropbox_upload ftp_upload s3_upload github
